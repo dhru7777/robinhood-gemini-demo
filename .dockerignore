@@ -1,7 +1,9 @@
 .git
 .env
 .env.*
+!.env.example
 node_modules
 .DS_Store
 *.log
-README.md
+.cursor
+agent-tools
