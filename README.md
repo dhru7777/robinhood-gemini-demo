@@ -1,22 +1,42 @@
-# Robinhood Chatter & Sentiment
+# robinhood-gemini-demo
 
-Before/After prototype with live Polygon prices and a Cortex-style chatter UI.
+Robinhood Before/After Chatter & Sentiment prototype.
 
-## Run locally
+- Live stock prices via Polygon (`POLY_API_KEY`)
+- Chatter / sentiment / news UI for the pitch
+- Guided tour via the **Guide** button
+
+## Local
 
 ```bash
-cp .env.example .env   # add POLY_API_KEY
+cp .env.example .env
+# add POLY_API_KEY=...
 npm start
 ```
 
 Open http://localhost:3000
 
-## Deploy (Render)
+## Deploy (manual)
 
-1. Open the Blueprint: https://dashboard.render.com/blueprints/new?repo=https://github.com/dhru7777/robinhood-chatter
-2. Apply `render.yaml`
-3. When prompted, set **POLY_API_KEY** (Polygon API key)
-4. Deploy the `robinhood-chatter` web service
+### Railway (API + full app)
 
-Local: `npm start` → http://localhost:3000  
-Config: `render.yaml` (Node web service, health check `/api/health`)
+1. New project from this repo (or CLI upload)
+2. Set env var: `POLY_API_KEY`
+3. Start command: `node server.js`
+4. Builder: Docker (`Dockerfile`) preferred
+
+### Netlify (frontend)
+
+If you host only the static UI on Netlify, point API calls at your Railway URL and set CORS on the backend. The default `app.js` uses same-origin `/api/...` when the Node server serves both.
+
+### Render
+
+See `render.yaml` Blueprint if you prefer Render for the Node service.
+
+## Env
+
+| Variable | Required | Notes |
+|---|---|---|
+| `POLY_API_KEY` | yes | Polygon API key |
+| `PORT` | no | Set by Railway/Render |
+| `NODE_ENV` | no | `production` in deploy |
