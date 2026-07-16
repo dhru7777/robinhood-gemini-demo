@@ -16,27 +16,46 @@ npm start
 
 Open http://localhost:3000
 
-## Deploy (manual)
+## Deploy: Netlify (frontend) + Railway (API)
 
-### Railway (API + full app)
+Netlify is static only. It cannot run `/api/*`. Point the UI at Railway.
 
-1. New project from this repo (or CLI upload)
-2. Set env var: `POLY_API_KEY`
-3. Start command: `node server.js`
-4. Builder: Docker (`Dockerfile`) preferred
+### 1) Railway (backend)
 
-### Netlify (frontend)
+1. Deploy this repo as a **Web Service**
+2. Prefer **Docker** (`Dockerfile`)
+3. Start: `node server.js`
+4. Env: `POLY_API_KEY=your_polygon_key`
+5. Copy the public URL, e.g. `https://app-production-xxxx.up.railway.app`
 
-If you host only the static UI on Netlify, point API calls at your Railway URL and set CORS on the backend. The default `app.js` uses same-origin `/api/...` when the Node server serves both.
+### 2) Netlify (frontend)
 
-### Render
+1. New site from `dhru7777/robinhood-gemini-demo` (branch `main`)
+2. Build command: `node scripts/write-config.js`
+3. Publish directory: `.`
+4. Site env var (required):
 
-See `render.yaml` Blueprint if you prefer Render for the Node service.
+| Key | Value |
+|---|---|
+| `RH_API_BASE` | Your Railway URL, **no trailing slash** |
+
+Example: `RH_API_BASE=https://app-production-xxxx.up.railway.app`
+
+5. Redeploy Netlify after setting the variable
+
+### Quick local override
+
+In the browser console on Netlify:
+
+```js
+localStorage.setItem('RH_API_BASE', 'https://YOUR-RAILWAY-URL')
+location.reload()
+```
 
 ## Env
 
-| Variable | Required | Notes |
+| Variable | Where | Required |
 |---|---|---|
-| `POLY_API_KEY` | yes | Polygon API key |
-| `PORT` | no | Set by Railway/Render |
-| `NODE_ENV` | no | `production` in deploy |
+| `POLY_API_KEY` | Railway | yes |
+| `RH_API_BASE` | Netlify | yes (for split deploy) |
+| `PORT` | Railway | auto |

@@ -1,0 +1,11 @@
+[build]
+  command = "node scripts/write-config.js"
+  publish = "."
+
+# Required on Netlify: set RH_API_BASE to your Railway URL (no trailing slash)
+# Example: https://app-production-xxxx.up.railway.app
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"

@@ -160,8 +160,19 @@ function initials(ticker) {
   return ticker.slice(0, 2);
 }
 
+function apiBase() {
+  const raw = (typeof window !== 'undefined' && (window.RH_API_BASE || localStorage.getItem('RH_API_BASE'))) || '';
+  return String(raw).trim().replace(/\/$/, '');
+}
+
+function apiUrl(path) {
+  const base = apiBase();
+  if (!path.startsWith('/')) path = `/${path}`;
+  return base ? `${base}${path}` : path;
+}
+
 async function api(path) {
-  const res = await fetch(path);
+  const res = await fetch(apiUrl(path));
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     const err = new Error(data.error || data.message || `HTTP ${res.status}`);
@@ -654,7 +665,7 @@ async function init() {
     const key = $('key-input').value.trim();
     if (!key) return;
     try {
-      const res = await fetch('/api/key', {
+      const res = await fetch(apiUrl('/api/key'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key }),
@@ -689,7 +700,10 @@ async function init() {
   } catch {
     showKeyBar(false);
     $('status-banner').hidden = false;
-    $('status-banner').textContent = 'Unable to reach the local server. Run npm start.';
+    const base = apiBase();
+    $('status-banner').textContent = base
+      ? `Cannot reach API at ${base}. Check Railway is live and RH_API_BASE on Netlify.`
+      : 'No API server on this host. On Netlify, set RH_API_BASE to your Railway URL, then redeploy.';
   }
 
   tickClock();

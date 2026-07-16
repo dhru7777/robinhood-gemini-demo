@@ -36,11 +36,23 @@ const MIME = {
   '.ico': 'image/x-icon',
 };
 
-function send(res, status, body, headers = {}) {
+function corsHeaders(req) {
+  const origin = req.headers.origin || '*';
+  return {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Max-Age': '86400',
+    Vary: 'Origin',
+  };
+}
+
+function send(res, status, body, headers = {}, req) {
   const payload = typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body);
   res.writeHead(status, {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
+    ...(req ? corsHeaders(req) : {}),
     ...headers,
   });
   res.end(payload);
@@ -93,11 +105,17 @@ function serveStatic(req, res) {
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
 
+  // Allow Netlify (and other hosts) to call this API
+  if (req.method === 'OPTIONS' && url.pathname.startsWith('/api/')) {
+    res.writeHead(204, corsHeaders(req));
+    return res.end();
+  }
+
   if (url.pathname === '/api/health') {
     return send(res, 200, {
       ok: true,
       hasKey: Boolean(process.env.POLY_API_KEY && process.env.POLY_API_KEY !== 'your_polygon_api_key_here'),
-    });
+    }, {}, req);
   }
 
   if (url.pathname === '/api/key' && req.method === 'POST') {
@@ -108,14 +126,18 @@ const server = http.createServer(async (req, res) => {
         const parsed = JSON.parse(body || '{}');
         const key = String(parsed.key || '').trim();
         if (!key || key.length < 10) {
-          return send(res, 400, { status: 'error', error: 'Invalid API key' });
+          return send(res, 400, { status: 'error', error: 'Invalid API key' }, {}, req);
         }
         process.env.POLY_API_KEY = key;
         // Persist for next restart (local demo only)
-        fs.writeFileSync(path.join(ROOT, '.env'), `POLY_API_KEY=${key}\nPORT=${PORT}\n`, 'utf8');
-        return send(res, 200, { status: 'ok', hasKey: true });
+        try {
+          fs.writeFileSync(path.join(ROOT, '.env'), `POLY_API_KEY=${key}\nPORT=${PORT}\n`, 'utf8');
+        } catch {
+          // read-only filesystem on some hosts
+        }
+        return send(res, 200, { status: 'ok', hasKey: true }, {}, req);
       } catch (e) {
-        return send(res, 400, { status: 'error', error: e.message });
+        return send(res, 400, { status: 'error', error: e.message }, {}, req);
       }
     });
     return;
@@ -128,9 +150,9 @@ const server = http.createServer(async (req, res) => {
         '/v2/snapshot/locale/us/markets/stocks/tickers',
         new URLSearchParams({ tickers })
       );
-      return send(res, status, data);
+      return send(res, status, data, {}, req);
     } catch (e) {
-      return send(res, e.code === 'NO_KEY' ? 503 : 500, { status: 'error', error: e.message, code: e.code || 'ERROR' });
+      return send(res, e.code === 'NO_KEY' ? 503 : 500, { status: 'error', error: e.message, code: e.code || 'ERROR' }, {}, req);
     }
   }
 
@@ -142,15 +164,15 @@ const server = http.createServer(async (req, res) => {
       const from = url.searchParams.get('from');
       const to = url.searchParams.get('to');
       if (!from || !to) {
-        return send(res, 400, { status: 'error', error: 'from and to are required (YYYY-MM-DD)' });
+        return send(res, 400, { status: 'error', error: 'from and to are required (YYYY-MM-DD)' }, {}, req);
       }
       const { status, data } = await proxyPolygon(
         `/v2/aggs/ticker/${encodeURIComponent(ticker)}/range/${multiplier}/${timespan}/${from}/${to}`,
         new URLSearchParams({ adjusted: 'true', sort: 'asc', limit: '500' })
       );
-      return send(res, status, data);
+      return send(res, status, data, {}, req);
     } catch (e) {
-      return send(res, e.code === 'NO_KEY' ? 503 : 500, { status: 'error', error: e.message, code: e.code || 'ERROR' });
+      return send(res, e.code === 'NO_KEY' ? 503 : 500, { status: 'error', error: e.message, code: e.code || 'ERROR' }, {}, req);
     }
   }
 
@@ -161,14 +183,14 @@ const server = http.createServer(async (req, res) => {
         '/v2/reference/news',
         new URLSearchParams({ ticker, limit: '6', order: 'desc', sort: 'published_utc' })
       );
-      return send(res, status, data);
+      return send(res, status, data, {}, req);
     } catch (e) {
-      return send(res, e.code === 'NO_KEY' ? 503 : 500, { status: 'error', error: e.message, code: e.code || 'ERROR' });
+      return send(res, e.code === 'NO_KEY' ? 503 : 500, { status: 'error', error: e.message, code: e.code || 'ERROR' }, {}, req);
     }
   }
 
   if (url.pathname.startsWith('/api/')) {
-    return send(res, 404, { status: 'error', error: 'Unknown API route' });
+    return send(res, 404, { status: 'error', error: 'Unknown API route' }, {}, req);
   }
 
   serveStatic(req, res);
