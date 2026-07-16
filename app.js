@@ -726,51 +726,58 @@ const tour = {
 
 const TOUR_STEPS = [
   {
-    title: 'Walk the before / after story',
-    body: 'This short guide shows today\'s stock page first, then the proposed Chatter & Sentiment experience.',
+    phase: 'The problem',
+    title: 'Serious traders still feel blind',
+    body: 'When a name like NVDA moves, the stock page shows price and a news list, but not why chatter flipped or what to do next. That gap is the product problem.',
     target: null,
     view: 'before',
-    nextLabel: 'Start',
+    nextLabel: 'See the limit',
   },
   {
-    title: 'Today\'s experience',
-    body: 'Here\'s the stock page as it feels today: live price on top, then a generic news feed. Same headlines for every user.',
+    phase: 'Limitation',
+    title: 'Today\'s feed is one-size-fits-all',
+    body: 'Same headlines for every user. No link to portfolio, sentiment, or an agent. You see that NVDA is down, not what the crowd is arguing about.',
     target: '#tour-before',
     view: 'before',
     nextLabel: 'Next',
   },
   {
-    title: 'Generic news only',
-    body: 'No chatter spike, no sentiment, no next action. Useful context, but not tied to what\'s moving the name right now.',
+    phase: 'Limitation',
+    title: 'News without a signal',
+    body: 'This list is useful context, but it has no chatter spike, no bull/bear split, and no next step. For non-Gold power users, that is the dead end.',
     target: '#tour-before-news',
     view: 'before',
     nextLabel: 'Next',
   },
   {
-    title: 'Open the After view',
-    body: 'Click After to see the proposed Cortex layer: live price plus chatter, sentiment, and an actionable GOLD path.',
+    phase: 'The turn',
+    title: 'Open the proposed After',
+    body: 'After keeps the same live price, then adds a Cortex layer: social sentiment, plain-language insight, and a GOLD path to act without leaving Robinhood.',
     target: '#tab-after',
     view: 'before',
     nextLabel: 'Open After',
     requireAfter: true,
   },
   {
-    title: 'Live price & chart',
-    body: 'Prices refresh continuously for the ticker you select. Pick a mover anytime and the chart and insight update with it.',
+    phase: 'The fix',
+    title: 'Live price stays the anchor',
+    body: 'Still a real market price and chart for the ticker you pick. The difference is what sits under it: insight tied to this move, not a generic feed.',
     target: '.col-chart',
     view: 'after',
     nextLabel: 'Next',
   },
   {
-    title: 'Cortex Insight',
-    body: 'This card answers what moved the name: chatter spike, mixed sentiment, and a plain-language summary of the debate.',
+    phase: 'The fix',
+    title: 'Cortex explains the move',
+    body: 'Chatter spike, mixed sentiment, and a short "what is this about" summary. The limitation of the old feed (no signal) becomes an answer on the stock page.',
     target: '#insight-card',
     view: 'after',
     nextLabel: 'Next',
   },
   {
-    title: 'Online Chatter',
-    body: 'A living feed of narratives around names in motion, so you can scan what\'s heating up without leaving the page.',
+    phase: 'The fix',
+    title: 'Chatter becomes actionable',
+    body: 'A living narrative feed plus GOLD full breakdown and agentic rule. Same app, but now sentiment is portfolio-relevant and tied to a next step.',
     target: '.col-chatter',
     view: 'after',
     nextLabel: 'Finish',
@@ -845,7 +852,8 @@ function renderTourStep() {
 
   if (step.view && state.view !== step.view) setView(step.view);
 
-  $('tour-kicker').textContent = `${tour.step + 1} / ${TOUR_STEPS.length}`;
+  const phase = step.phase ? `${step.phase} · ` : '';
+  $('tour-kicker').textContent = `${phase}${tour.step + 1} / ${TOUR_STEPS.length}`;
   $('tour-title').textContent = step.title;
   $('tour-body').textContent = step.body;
 
